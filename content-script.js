@@ -54,8 +54,11 @@ function onImageLoaded(img) {
 
     const text = panel.innerText.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
     const flagged = text.includes("this record is already under evaluation");
-
+    const reviewed = text.includes("this record has already been evaluated by our local volunteer");
     if (flagged) {
+       img.style.border = "5px solid orange";
+    }
+    if (reviewed) {
        img.style.border = "5px solid red";
     }
 }
