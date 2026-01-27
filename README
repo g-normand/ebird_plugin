@@ -1,0 +1,3 @@
+On Chrome/Opera:
+Go to about:extensions
+Click on "Load unpacked" and add the manifest.json

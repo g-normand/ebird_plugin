@@ -53,13 +53,11 @@ function onImageLoaded(img) {
     if (!panel) return;
 
     const text = panel.innerText.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-    const flagged = text.includes("this record is already under evaluation");
-    const reviewed = text.includes("this record has already been evaluated by our local volunteer");
-    if (flagged) {
+    const isUnderReview = panel.querySelector(
+        'input[data-type="misid"][disabled]'
+    ) !== null;
+    if (isUnderReview) {
        img.style.border = "5px solid orange";
-    }
-    if (reviewed) {
-       img.style.border = "5px solid red";
     }
 }
 
@@ -74,3 +72,30 @@ function watchImage(img) {
     }
 }
 
+
+(() => {
+       
+    const section = document.querySelector('section[aria-labelledby="primary-details"]');
+    if (!section) return;
+
+    const submitLink = section.querySelector('a[href^="/submit"]');
+    if (!submitLink) return;
+
+    // Extract locID from the URL
+    const url = new URL(submitLink.href, window.location.origin);
+    const locID = url.searchParams.get('locID');
+    if (!locID) return;
+
+    // Create the new link
+    const editLink = document.createElement('a');
+    editLink.href = `https://ebird.org/mylocations/edit/${locID}`;
+    editLink.textContent = 'See the location';
+    editLink.target = '_blank';
+
+    // Match eBird button styling
+    editLink.className = submitLink.className;
+    editLink.style.marginLeft = '0.5rem';
+
+    // Insert it right after the "submit" link
+    submitLink.insertAdjacentElement('afterend', editLink);
+})();
