@@ -247,4 +247,58 @@ if (/^\/checklist\/S\d+$/.test(path)) {
   })();
 }
 
+// ============================================================
+// PAGE: /hotspot/[id] — altitude lookup
+// ============================================================
+
+if (/^\/hotspot\/L\d+$/.test(path)) {
+    (async function addAltitude() {
+        const placeLinks = document.querySelector('.PlaceLinks');
+        if (!placeLinks) return;
+
+        const mapsLink = placeLinks.querySelector('a[href*="maps/search/?api=1&query="]');
+        if (!mapsLink) return;
+
+        const coordsMatch = mapsLink.href.match(/query=(-?[\d.]+),(-?[\d.]+)/);
+        if (!coordsMatch) {
+            console.warn('[ebird-plugin] Could not find coordinates on hotspot page');
+            return;
+        }
+        const lat = coordsMatch[1];
+        const lng = coordsMatch[2];
+
+        // placeholder badge while we wait on the request
+        const badge = document.createElement('span');
+        badge.className = 'ebird-altitude-badge';
+        badge.textContent = ' … altitude';
+        badge.style.marginLeft = '0.5rem';
+        badge.style.fontWeight = 'bold';
+        placeLinks.appendChild(badge);
+
+        try {
+	    const res = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`);
+	    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+	    const data = await res.json();
+
+	    console.log('[ebird-plugin] open-meteo elevation response:', data);
+
+	    const altitude = data?.elevation?.[0] ?? null;
+
+	    if (altitude == null) {
+		console.warn('[ebird-plugin] Could not parse altitude field from response', data);
+		badge.textContent = ' ⛰ ?';
+		badge.title = 'See console for raw response';
+		return;
+	    }
+
+	    badge.textContent = ` ⛰ ${altitude} m`;
+	    badge.title = 'Elevation via Open-Meteo';
+	} catch (err) {
+	    console.warn('[ebird-plugin] Elevation fetch failed:', err);
+	    badge.textContent = ' ⛰ error';
+	    badge.title = String(err);
+	}
+    })();
+}
+
 // other pages: do nothing

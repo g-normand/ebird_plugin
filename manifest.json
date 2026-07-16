@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "eBird plugin -- guiguide",
-  "version": "0.3",
+  "version": "0.4",
   "description": "eBird add-ons (flagged pictures and my locations link)",
   "icons": {
     "48": "icons/icon.png"
