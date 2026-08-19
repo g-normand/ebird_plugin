@@ -28,11 +28,9 @@ if (/^\/checklist\/S\d+$/.test(path)) {
     
 
     waitForMisIDTools(() => {
-        // your image-watching code here
-        console.log("Running image detection...");
         // Initial scan — delayed 500ms to allow dynamic DOM to appear
         setTimeout(() => {
-        document.querySelectorAll("img").forEach(watchImage);
+          document.querySelectorAll("img").forEach(watchImage);
         }, 500);
         
         // Watch dynamic content
@@ -47,7 +45,7 @@ if (/^\/checklist\/S\d+$/.test(path)) {
     observer.observe(document.body, { childList: true, subtree: true });
     });
 
-    function onImageLoaded(img) {
+    function checkUnderReview(img) {
         const link = img.closest('a[data-asset-id]');
         if (!link) return;
 
@@ -62,7 +60,7 @@ if (/^\/checklist\/S\d+$/.test(path)) {
             'input[data-type="misid"][disabled]'
         ) !== null;
         if (isUnderReview) {
-        img.style.border = "5px solid orange";
+           img.style.border = "5px solid orange";
         }
     }
 
@@ -71,15 +69,14 @@ if (/^\/checklist\/S\d+$/.test(path)) {
         img.__watched = true;
 
         if (img.complete) {
-            onImageLoaded(img);
+            checkUnderReview(img);
         } else {
-            img.addEventListener("load", () => onImageLoaded(img), { once: true });
+            img.addEventListener("load", () => checkUnderReview(img), { once: true });
         }
     }
 
 
     (() => {
-        
         const section = document.querySelector('section[aria-labelledby="primary-details"]');
         if (!section) return;
 
@@ -120,14 +117,17 @@ if (/^\/checklist\/S\d+$/.test(path)) {
         
         // --- 2. Get lat/lng from Google Maps link ---
         const mapsLink = document.querySelector('a[href*="maps/search/?api=1&query="]');
-        const coordsMatch = mapsLink?.href.match(/query=([-\d.]+),([-\d.]+)/);
+        const coordsMatch = mapsLink?.href.match(
+	  /query=(-?[\d.]+(?:[eE][+-]?\d+)?),(-?[\d.]+(?:[eE][+-]?\d+)?)/
+	);
         if (!coordsMatch) {
-        console.warn('[ebird-plugin] Could not find coordinates');
-        return;
+           console.warn('[ebird-plugin] Could not find coordinates');
+           console.log('Stopping ID Checker');
+           return;
         }
         const lat = coordsMatch[1];
         const lng = coordsMatch[2];
-
+ 
         // --- 3. Call the photo-id API ---
         async function callPhotoId(photoId, speciesCode) {
             const url = `https://ebird.org/photo-id/${photoId}/${speciesCode}` +
@@ -165,8 +165,9 @@ if (/^\/checklist\/S\d+$/.test(path)) {
             const cfg = {
                 loading:   { bg: '#546e7a', text: '… checking' },
                 match:     { bg: '#2e7d32', text: '✓ AI agrees' },
-                softmatch: { bg: '#f57f17', text: '~ soft agree' },  // NEW
+                softmatch: { bg: '#f57f17', text: '~ soft agree' },
                 nomatch:   { bg: '#c62828', text: '✗' },
+                disagree:   { bg: '#c62828', text: '✗' },
                 error:     { bg: '#e65100', text: '! error' },
             }[state];
 
@@ -177,7 +178,7 @@ if (/^\/checklist\/S\d+$/.test(path)) {
                 label   = `✓ ${Math.round(data.confidence * 100)}%`;
                 tooltip = `AI confidently agrees (${data.opinion})`;
             }
-            if (state === 'softmatch' && data?.confidence != null) {
+            else if (state === 'softmatch' && data?.confidence != null) {
                 if (data.match){
                     label = `${Math.round(data.confidence * 100)}%`
                 }
@@ -187,8 +188,12 @@ if (/^\/checklist\/S\d+$/.test(path)) {
                 tooltip = `AI soft-agrees: ${data.suggested ?? '?'}` +
                         (data.confidence != null ? ` (${Math.round(data.confidence * 100)}%)` : '');
             }
-            if (state === 'nomatch') {
-                label   = `✗ ${data?.suggested ?? '?'}`;
+            else if (state === 'disagree') {
+                label   = `✗ ${data?.opinion ?? '?'} : ${data?.suggested} (${Math.round(data.confidence * 100)}%)`;
+                tooltip = ``;
+            }
+            else if (state === 'nomatch') {
+                label   = `✗ ${data?.opinion ?? '?'}`;
                 tooltip = `AI top suggestion: ${data?.suggested ?? 'unknown'}` +
                         (data?.confidence != null ? ` (${Math.round(data.confidence * 100)}%)` : '');
             }
@@ -230,6 +235,7 @@ if (/^\/checklist\/S\d+$/.test(path)) {
                     const opinionToState = {
                         confident_agree: 'match',
                         soft_agree:      'softmatch',
+                        confident_disagree:      'disagree',
                         // anything else (disagree, unsure, etc.) → nomatch
                     };
                     const badgeState = result.match
@@ -279,8 +285,6 @@ if (/^\/hotspot\/L\d+$/.test(path)) {
 	    const res = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`);
 	    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 	    const data = await res.json();
-
-	    console.log('[ebird-plugin] open-meteo elevation response:', data);
 
 	    const altitude = data?.elevation?.[0] ?? null;
 
