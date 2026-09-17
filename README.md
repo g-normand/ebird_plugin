@@ -25,3 +25,5 @@ The changes are :
 4/ Get altitude of a hotspot
 
 ![image](assets/ebird6.png)
+
+5/ Trip report with CSV extension

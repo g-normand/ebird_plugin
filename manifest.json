@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
   "name": "eBird plugin -- guiguide",
-  "version": "0.4.1",
+  "version": "0.5",
   "description": "eBird add-ons",
   "icons": {
     "48": "icons/icon.png"
   },
   "action": {
-    "default_icon": "icons/icon.png"
+    "default_icon": "icons/icon.png",
+    "default_popup": "popup.html"
   },
   "content_scripts": [{
     "matches": [
