@@ -605,4 +605,24 @@ if (/^\/tripreport\/\d+/.test(path)) {
     })();
 }
 
+
+// ============================================================
+// PAGE: /species/[] — add a small HTML link
+// ============================================================
+
+if (/^\/species\/\w+/.test(path)) {
+   
+    var scientificName = document.querySelector('.Heading-sub--sci').textContent;
+
+    const wrapper = document.createElement('button');
+    wrapper.id = 'usherbrooke-link';
+
+    const nfomLink = document.createElement('a');
+    nfomLink.href = `https://nfom.recherche.usherbrooke.ca/rechercher?s=${scientificName}`;
+    nfomLink.textContent = 'Lien NFOM';
+    nfomLink.target = '_blank';
+    nfomLink.style = 'color:cadetblue;';
+
+    var badges = document.querySelector('.ActivityBadge').insertAdjacentElement('afterend', nfomLink);
+}
 // other pages: do nothing
